@@ -1,7 +1,7 @@
 /* Logging and fanout for datagrams arriving from serial
 
- This code opens a serial port, raises the DTR pin, ingests COBS-framed datagrams
- on the serial device, de-escapes them, prepends them with a size and timestamp, logs them
+ This code opens a serial port (or USB CDC serial device), raises the DTR pin, ingests
+ COBS-framed datagrams, de-escapes them, prepends them with a size and timestamp, logs them
  to disk, and fans them out to realtime listeners via a ring buffer in shared memory. Read
  on for details.
 
@@ -21,7 +21,7 @@
  bytes when processing the packet.
 
  On-wire packets are expected to be terminated by a zero byte, with consistent overhead
- byte stuffing (COBS) used  to ensure that the frame-end byte will appear nowhere else in
+ byte stuffing (COBS) used to ensure that the frame-end byte will appear nowhere else in
  the data stream. The encoding is removed by the logger before writing the packets to disk
  and to the downstream readers.
 
@@ -56,15 +56,10 @@
 #include <signal.h>
 
 /* posix includes */
-#include <unistd.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <sys/resource.h>
-#include <sys/mman.h>
 #include <sys/stat.h>
 #include <termios.h>
-#include <libgen.h>
-#include <poll.h>
 
 /* useful macros */
 #define WARNING_ANSI "\x1B[35;1mwarning:\x1B[0m"
