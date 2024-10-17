@@ -162,10 +162,11 @@ static ssize_t readall(int fd, const void * buf, const size_t size) {
 }
 
 static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int fd) {
-    /* note: "plain" must be large enough to hold the appended zero */
+    /* note: "out" must be large enough to hold an extra final appended zero */
     unsigned char * dst = out, * plain = out;
 
     while (1) {
+        /* read one byte */
         unsigned char code;
         if (-1 == read(fd, &code, sizeof(code))) return -1;
 
@@ -179,13 +180,18 @@ static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int f
             /* discard all further bytes until we see a zero byte, then reset */
             do if (-1 == read(fd, &code, sizeof(code))) return -1;
             while (code);
+
             return read_escaped_frame(out, max_plain_size, fd);
         }
 
+        /* now we can do a longer read of the expected number of bytes straight into the
+         output buffer, without having to escape anything or read one byte at a time, or
+         worry about doing a blocking read not temporally aligned with the presence of data */
         if (-1 == readall(fd, dst, code - 1)) return -1;
 
         dst += code - 1;
 
+        /* a special value of 0xff indicates that the block encodes 254 bytes */
         if (code != 0xFF) *(dst++) = 0;
     }
 
