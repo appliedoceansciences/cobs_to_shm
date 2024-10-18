@@ -25,9 +25,19 @@ import matplotlib.ticker as ticker
 
 import matplotlib.pyplot as plt
 
+def packet_concatenator(yield_packet_bytes_function, source):
+    out = None
+
+    for samples, timestamp, fs in yield_acoustic_packets(yield_packet_bytes_function, source, None):
+        out = samples if out is None else np.concatenate((out, samples), axis=0)
+
+        if out.shape[0] >= 0.05 * fs:
+            yield out, timestamp, fs
+            out = None
+
 # turns a generator into a child thread which yields functions and arguments to main thread
 def child_thread(main_thread_work, yield_packet_bytes_function, source):
-    for packet in yield_acoustic_packets(yield_packet_bytes_function, source, None):
+    for packet in packet_concatenator(yield_packet_bytes_function, source):
         main_thread_work.put(packet)
 
     # inform main thread that child generator has reached eof and no more input is coming
