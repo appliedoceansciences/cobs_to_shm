@@ -12,6 +12,7 @@ import struct
 import sys
 import numpy as np
 from datetime import datetime
+from collections import namedtuple
 
 # this function can also be imported and used on its own to parse a packet received via udp
 def parse_acoustic_packet(packet_bytes):
@@ -75,6 +76,8 @@ def datestr_from_unix_time(time_in_unix_seconds):
     remainder = microseconds % 1000000
     return '%s.%06uZ' % (datetime.utcfromtimestamp(integer_portion).strftime('%Y%m%dT%H%M%S'), remainder)
 
+packet_tuple = namedtuple('packet_tuple', ['samples', 'timestamp', 'fs'])
+
 # this generator function can be imported and used by calling code to ingest from log files or udp
 def yield_acoustic_packets(yield_packet_bytes_function, source, phonemask):
     seqnum_prev = None
@@ -107,7 +110,7 @@ def yield_acoustic_packets(yield_packet_bytes_function, source, phonemask):
 
         if phonemask is not None: samples = np.take(samples, phonemask, axis=1)
 
-        yield samples, timestamp_unix_seconds, sample_rate
+        yield packet_tuple(samples=samples, timestamp=timestamp_unix_seconds, fs=sample_rate)
 
     print('incoming data has ended', file=sys.stderr)
     if timestamp_prev is not None:
@@ -125,7 +128,7 @@ if __name__ == '__main__':
             if key == 'phonemask': phonemask = list(map(int, value.split(',')))
 
         # loop on output of above generator function, dumping samples to stdout as raw pcm
-        for samples, timestamp_unix_seconds, sample_rate in yield_acoustic_packets(yield_packet_bytes_from_log_stream, sys.stdin.buffer, phonemask=phonemask):
-            sys.stdout.buffer.write(samples)
+        for packet in yield_acoustic_packets(yield_packet_bytes_from_log_stream, sys.stdin.buffer, phonemask=phonemask):
+            sys.stdout.buffer.write(packet.samples)
 
     main()

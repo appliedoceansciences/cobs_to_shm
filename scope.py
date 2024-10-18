@@ -12,7 +12,7 @@ import numpy as np
 
 # This provides the generator function which knows how to extract sensor-agnostic frames of
 # acoustic sample data from whatever possibly sensor-specific format they are coming from
-from parse_acoustic_packets import yield_acoustic_packets, yield_packet_bytes_from_log_stream
+from parse_acoustic_packets import yield_acoustic_packets, yield_packet_bytes_from_log_stream, packet_tuple
 
 import matplotlib
 #matplotlib.rcParams['toolbar'] = 'None'
@@ -28,11 +28,11 @@ import matplotlib.pyplot as plt
 def packet_concatenator(yield_packet_bytes_function, source):
     out = None
 
-    for samples, timestamp, fs in yield_acoustic_packets(yield_packet_bytes_function, source, None):
-        out = samples if out is None else np.concatenate((out, samples), axis=0)
+    for packet in yield_acoustic_packets(yield_packet_bytes_function, source, None):
+        out = packet.samples if out is None else np.concatenate((out, packet.samples), axis=0)
 
-        if out.shape[0] >= 0.05 * fs:
-            yield out, timestamp, fs
+        if out.shape[0] >= 0.05 * packet.fs:
+            yield packet_tuple(samples=out, timestamp=packet.timestamp, fs=packet.fs)
             out = None
 
 # turns a generator into a child thread which yields functions and arguments to main thread
@@ -112,15 +112,13 @@ def main():
         packet = main_thread_work.get()
         if packet is None: break
 
-        samples, timestamp, fs = packet
-
         # do this setup stuff on the first input
         if not ax:
-            C = samples.shape[1]
-            xdata = np.arange(0, samples.shape[0]) / fs
+            C = packet.samples.shape[1]
+            xdata = np.arange(0, packet.samples.shape[0]) / packet.fs
             ax = fig.add_subplot(1, 1, 1)
 
-            lines = ax.plot(xdata, samples)
+            lines = ax.plot(xdata, packet.samples)
 
             ax.set_ylim(ymin=-32768, ymax=32767)
             ax.set(title='data')
@@ -138,7 +136,7 @@ def main():
 
         if main_thread_work.empty():
             for ic in range(C):
-                lines[ic].set_ydata(samples[:, ic])
+                lines[ic].set_ydata(packet.samples[:, ic])
             fig.canvas.draw()
             fig.canvas.flush_events()
 
