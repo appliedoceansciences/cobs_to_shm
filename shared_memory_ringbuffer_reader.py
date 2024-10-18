@@ -13,9 +13,8 @@ import mmap
 import struct
 import sys
 import time
-import errno
-from _posixshmem import shm_open
 from types import SimpleNamespace
+from _posixshmem import shm_open
 
 def pid_is_still_alive(pid):
     try: os.kill(pid, 0)
@@ -108,7 +107,7 @@ def shared_memory_ringbuffer_generator(shm_name):
         seconds_per_packet_num = 0
         seconds_per_packet_den += 1
 
-        yield(payload)
+        yield payload
 
         # we can now detect whether we were lapped while doing something with this slot.
         # ideally, if we were doing some calculation on the slot contents and then emitting
@@ -117,8 +116,10 @@ def shared_memory_ringbuffer_generator(shm_name):
             raise RuntimeError('reader lapped while reading slot')
 
 if __name__ == '__main__':
-    shm_name = '/shm' if len(sys.argv) < 2 else sys.argv[1]
+    def main():
+        shm_name = '/shm' if len(sys.argv) < 2 else sys.argv[1]
 
-    for payload in shared_memory_ringbuffer_generator(shm_name):
-        sys.stdout.buffer.write(payload)
-        sys.stdout.flush()
+        for payload in shared_memory_ringbuffer_generator(shm_name):
+            sys.stdout.buffer.write(payload)
+            sys.stdout.flush()
+    main()
