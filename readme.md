@@ -12,3 +12,7 @@ Example soft-realtime reader code is available natively for C and Python, which 
 
     ./cobs_to_disk /dev/tty.usbmodem1301 &
     ./scope.py shm:cobs_to_disk
+
+## References
+
+- S. Cheshire and M. Baker, "Consistent overhead byte stuffing," in IEEE/ACM Transactions on Networking, vol. 7, no. 2, pp. 159-172, April 1999, doi: 10.1109/90.769765.
