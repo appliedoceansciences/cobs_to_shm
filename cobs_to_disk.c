@@ -54,6 +54,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <signal.h>
+#include <ctype.h>
 
 /* posix includes */
 #include <fcntl.h>
@@ -198,6 +199,22 @@ static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int f
     return dst > plain ? (dst - plain) - 1 : 0;
 }
 
+static int text_packet(void * packet_buffer, const size_t packet_size) {
+    unsigned char * restrict const byte = packet_buffer;
+
+    /* TODO: refine this */
+    size_t printable_characters = 0;
+    for ( ; printable_characters < packet_size; printable_characters++) {
+        if (byte[printable_characters] == '\r' ||
+            byte[printable_characters] == '\n') break;
+        if (!isprint(byte[printable_characters])) return 0;
+    }
+
+    if (printable_characters)
+        fprintf(stderr, "%s: \"%.*s\"\n", __func__, (int)printable_characters, byte);
+    return 1;
+}
+
 int main(const int argc, char ** const argv) {
     /* do some silly stuff to get a progname regardless of runtime environment */
     const char * s, * progname = argc ? ((s = strrchr(argv[0], '/')) ? s + 1 : argv[0]) : __func__;
@@ -339,6 +356,8 @@ int main(const int argc, char ** const argv) {
         /* write the packet to the current output file. WARNING: this should not be a file on sd */
         if (!fwrite(buf, sizeof(buf->logging_header) + packet_size_padded, 1, fh))
             NOPE("%s: fwrite(): %s\n", progname, strerror(errno));
+
+        text_packet(buf->packet, packet_size);
 
         const unsigned elapsed = current_time_in_unix_microseconds() - packet_time_microseconds;
         if (elapsed >= 100000)
