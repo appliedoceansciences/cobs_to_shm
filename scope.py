@@ -25,19 +25,19 @@ import matplotlib.ticker as ticker
 
 import matplotlib.pyplot as plt
 
-def packet_concatenator(yield_packet_bytes_function, source):
+def packet_concatenator(nominal_length, yield_packet_bytes_function, source):
     out = None
 
     for packet in yield_acoustic_packets(yield_packet_bytes_function, source, None):
         out = packet.samples if out is None else np.concatenate((out, packet.samples), axis=0)
 
-        if out.shape[0] >= 0.05 * packet.fs:
+        if out.shape[0] >= nominal_length * packet.fs:
             yield packet_tuple(samples=out, timestamp=packet.timestamp, fs=packet.fs)
             out = None
 
 # turns a generator into a child thread which yields functions and arguments to main thread
-def child_thread(main_thread_work, yield_packet_bytes_function, source):
-    for packet in packet_concatenator(yield_packet_bytes_function, source):
+def child_thread(main_thread_work, nominal_length, yield_packet_bytes_function, source):
+    for packet in packet_concatenator(nominal_length, yield_packet_bytes_function, source):
         main_thread_work.put(packet)
 
     # inform main thread that child generator has reached eof and no more input is coming
@@ -55,6 +55,7 @@ def main():
     lines = None
     bg = None
     xdata = None
+    nominal_length = 0.03
 
     # constants you might want to fiddle with. TODO: allow main() to modify these
     clim=(20 + 45, 86 + 45)
@@ -100,7 +101,7 @@ def main():
     # start a child thread which accept output yielded from one of two possible generators
     # depending on whether stdin is a tty, and safely communicate that generator output
     # and what to do with it back to the main thread via the work queue
-    pth = threading.Thread(target=child_thread, args=(main_thread_work, yield_packet_bytes_function, input_source))
+    pth = threading.Thread(target=child_thread, args=(main_thread_work, nominal_length, yield_packet_bytes_function, input_source))
     pth.start()
 
     # event loop which dequeues work from other threads that must be done on main thread
