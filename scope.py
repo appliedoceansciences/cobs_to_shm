@@ -27,13 +27,30 @@ import matplotlib.pyplot as plt
 
 def packet_concatenator(nominal_length, yield_packet_bytes_function, source):
     out = None
+    out_prior = None
 
-    for packet in yield_acoustic_packets(yield_packet_bytes_function, source, None):
+    child = yield_acoustic_packets(yield_packet_bytes_function, source, None)
+    packet = next(child, None)
+    if not packet: return
+
+    T_to_yield = int(nominal_length * packet.fs)
+
+    while packet is not None:
         out = packet.samples if out is None else np.concatenate((out, packet.samples), axis=0)
 
-        if out.shape[0] >= nominal_length * packet.fs:
-            yield packet_tuple(samples=out, timestamp=packet.timestamp, fs=packet.fs)
+        if out.shape[0] >= T_to_yield:
+            if out_prior is not None:
+                ic_trigger = 0
+                full = np.concatenate((out_prior, out), axis=0)
+                it_trim = np.argmax(np.diff(out_prior[:, ic_trigger]))
+                subset = full[it_trim:(it_trim + T_to_yield), :]
+
+                yield packet_tuple(samples=subset, timestamp=packet.timestamp, fs=packet.fs)
+
+            out_prior = out
             out = None
+
+        packet = next(child, None)
 
 # turns a generator into a child thread which yields functions and arguments to main thread
 def child_thread(main_thread_work, nominal_length, yield_packet_bytes_function, source):
