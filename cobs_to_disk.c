@@ -290,7 +290,8 @@ int main(const int argc, char ** const argv) {
 
         /* if read_escaped_frame returns -1, we either got eof or an error on the input */
         else if (-1 == ret) {
-            fprintf(stderr, "%s: %s\n", progname, strerror(errno));
+            if (ENXIO != errno)
+                fprintf(stderr, "%s: %s\n", progname, strerror(errno));
             break;
         }
         else if (!ret) continue;
