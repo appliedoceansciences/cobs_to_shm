@@ -40,7 +40,7 @@ def packet_concatenator(nominal_length, yield_packet_bytes_function, source):
 
         if out.shape[0] >= T_to_yield:
             if out_prior is not None:
-                ic_trigger = 0
+                ic_trigger = np.argmax(np.var(out_prior, axis=0))
                 full = np.concatenate((out_prior, out), axis=0)
                 it_trim = np.argmax(np.diff(out_prior[:, ic_trigger]))
                 subset = full[it_trim:(it_trim + T_to_yield), :]
