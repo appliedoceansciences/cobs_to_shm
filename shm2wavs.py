@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 import sys
-import struct
-import math
-import time
 import wave
+import socket
 import numpy as np
 
 # This provides the generator function which knows how to extract sensor-agnostic frames of
@@ -66,13 +64,12 @@ def main():
     output = np.zeros(dtype=packet.samples.dtype, shape=(samples_per_output, C))
 
     it_output = 0
-
     ifile = 0
 
     # loop over all incoming packets including the first one
     while packet is not None:
+        # copy the new sample data into where it goes in the output buffer
         output[it_output:(it_output + samples_per_packet), :] = packet.samples
-
         it_output += samples_per_packet
 
         # whenever we have accumulated the desired number of samples...
