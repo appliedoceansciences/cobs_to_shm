@@ -1,8 +1,4 @@
-/* the use case for this is when you have one writer and zero or more readers, on the same
- system, and you want zero-copy, fire-and-forget by the writer semantics, where there is
- absolutely no chance of a misbehaving reader blocking the writer or other readers. so, like
- udp multicast to localhost, but zero copy
- */
+/* campbell, isc license */
 #include "shared_memory_ringbuffer.h"
 
 #include <stdio.h>

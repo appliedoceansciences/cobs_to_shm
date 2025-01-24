@@ -1,6 +1,10 @@
 # `cobs_to_disk`
 
-For the interface between the microcontroller and soft-realtime processing environment on the Linux SBC (Raspberry Pi Zero 2W), a simple consistent overhead byte stuffing (COBS) framing scheme is used to turn the byte-oriented link (in practice a USB CDC serial device, although the software will work as-is on a physical serial port of sufficient baud rate) into a packet-oriented link, allowing discrete acoustic and nonacoustic data packets to be interleaved and sent via the same pipe.
+This repository implements the Linux end of the interface between the DAQ microcontroller and soft-realtime logging and processing environment on the Linux SBC, as well as some simple examples of how to interact with the resulting sample data, both in realtime and in postprocessing.
+
+## Details
+
+A simple consistent overhead byte stuffing (COBS) framing scheme is used to turn the byte-oriented link (in practice a USB CDC serial device, although the software will work as-is on a physical serial port of sufficient baud rate) into a packet-oriented link, allowing discrete acoustic and nonacoustic data packets to be interleaved and sent via the same pipe.
 
  This COBS framing is removed by the receiver code on the Linux SBC, and each resulting packet has a logging header prepended and, if necessary, some padding bytes appended, and these are written to disk in ten-second chunks (without gaps). The filename of each completed ten-second-chunk file is written to `stdout` when each file is finished, allowing downstream logic to do something with each file (such as compress it and move it to a more permanent location, or simply delete it as in the below example).
  
