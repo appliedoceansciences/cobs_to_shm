@@ -11,9 +11,9 @@ import numpy as np
 from parse_acoustic_packets import yield_acoustic_packets, yield_packet_bytes_from_log_stream
 
 def main():
-
     output_length_desired = 4
 
+    # do a bunch of boilerplate to figure out where we are getting input from
     if len(sys.argv) > 1:
         if 'shm:' in sys.argv[1]:
             try:
@@ -42,12 +42,14 @@ def main():
             yield_packet_bytes_function = yield_packet_bytes_from_udp
             print('listening for udp on port %u' % int(sys.argv[1]), file=sys.stderr)
     else:
-        print('listening for input on stdin. if udp input is desired, specify a port number to listen on. if tcp is desired, specify and address:port to connect to', file=sys.stderr)
+        print('listening for input on stdin. if udp input is desired, specify a port number to listen on. if tcp is desired, specify an address:port to connect to', file=sys.stderr)
         input_source = sys.stdin.buffer
         yield_packet_bytes_function = yield_packet_bytes_from_log_stream
 
+    # start a generator function which will yield one acoustic packet at a time
     child = yield_acoustic_packets(yield_packet_bytes_function, input_source, None)
 
+    # wait for the first packet
     packet = next(child, None)
     if not packet: return
 
@@ -56,22 +58,28 @@ def main():
     samples_per_packet = packet.samples.shape[0]
     C = packet.samples.shape[1]
 
+    # for now just round the output to the nearest packet
     packets_per_output = round(output_length_desired * fs / samples_per_packet)
     samples_per_output = packets_per_output * samples_per_packet
+
+    # buffer which will hold the desired chunk of data
     output = np.zeros(dtype=packet.samples.dtype, shape=(samples_per_output, C))
 
     it_output = 0
 
     ifile = 0
 
+    # loop over all incoming packets including the first one
     while packet is not None:
         output[it_output:(it_output + samples_per_packet), :] = packet.samples
 
         it_output += samples_per_packet
 
+        # whenever we have accumulated the desired number of samples...
         if samples_per_output == it_output:
             it_output = 0
 
+            # write them to a .wav file in /tmp/
             filename = '/tmp/%04u.wav' % ifile
             ifile += 1
             with wave.open(filename, 'w') as w:
@@ -81,9 +89,10 @@ def main():
                 w.writeframes(output)
                 w.close()
 
+            # write the just-completed filename to stdout immediately
             print(filename, flush=True)
-#            sys.stdout.buffer.write(output)
 
+        # keep looping as long as there are more packets
         packet = next(child, None)
 
 main()

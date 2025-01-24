@@ -105,7 +105,7 @@ def main():
             yield_packet_bytes_function = yield_packet_bytes_from_udp
             print('listening for udp on port %u' % int(sys.argv[1]), file=sys.stderr)
     else:
-        print('listening for input on stdin. if udp input is desired, specify a port number to listen on. if tcp is desired, specify and address:port to connect to', file=sys.stderr)
+        print('listening for input on stdin. if udp input is desired, specify a port number to listen on. if tcp is desired, specify an address:port to connect to', file=sys.stderr)
         input_source = sys.stdin.buffer
         yield_packet_bytes_function = yield_packet_bytes_from_log_stream
 
