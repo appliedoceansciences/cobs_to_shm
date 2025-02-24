@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 import wave
 import socket
@@ -77,7 +78,7 @@ def main():
             it_output = 0
 
             # write them to a .wav file in /tmp/
-            filename = '/tmp/%04u.wav' % ifile
+            filename = '%s/%04u.wav' % ('/dev/shm/' if os.path.isdir('/dev/shm/') else '/tmp', ifile)
             ifile += 1
             with wave.open(filename, 'w') as w:
                 w.setnchannels(C)
