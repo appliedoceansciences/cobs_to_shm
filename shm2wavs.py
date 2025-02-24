@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# the stdout of this program will have the names of .wav files written to it, one per line,
+# after this program has written and closed that .wav file. the downstream code which reads
+# this program's stdout shall open each file, do something with the contents, and then
+# delete the file. the system will run out of RAM if the files are not deleted soon enough
 import os
 import sys
 import wave
