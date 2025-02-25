@@ -14,8 +14,14 @@ Example soft-realtime reader code is available natively for C and Python, which 
 
 ## Usage
 
-    ./cobs_to_disk /dev/tty.usbmodem1301 | xargs rm &
+Invoke with one argument for no logging:
+
+    ./cobs_to_disk /dev/tty.usbmodem1301
     ./scope.py shm:cobs_to_disk
+
+Invoke with two arguments for logging, and pipe the output into logic which will move the resulting files to some final path:
+
+    ./cbs_to_disk /dev/tty.usbmodem1301 /dev/shm/ | xargs -I file mv file /final/path/
 
 ## References
 

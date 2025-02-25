@@ -253,13 +253,16 @@ int main(const int argc, char ** const argv) {
     }
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s /dev/tty.usbmodem24601\n", argv[0]);
+        fprintf(stderr, "Usage: %s /dev/tty.usbmodem24601 [/dev/shm/]\n", argv[0]);
+        fprintf(stderr, "where the optional second argument specifies the intermediate directory to which files will be written. This intermediate directory MUST NOT be in slow nonvolatile storage (such as on a microsd card) - the intention is that files will be moved to a final logging location after they are complete (and after applying compression if desired) by piping the output of %s into xargs or similar. If no second argument is given, only fanout via shm will be performed.\n", progname);
         exit(EXIT_FAILURE);
     }
 
     const char * escaped_serial_path = argv[1];
-    const char * logging_path = -1 == stat("/dev/shm/", &(struct stat){ }) ? "/tmp/" : "/dev/shm/";
-    fprintf(stderr, "%s: output files will be staged in %s\n", progname, logging_path);
+    const char * logging_path = argc > 2 ? argv[2] : NULL;
+
+    if (logging_path)
+        fprintf(stderr, "%s: output files will be staged in %s\n", progname, logging_path);
 
     /* todo: add some sort of check that the logging path is a tmpfs and not a microsd card */
 
@@ -336,7 +339,7 @@ int main(const int argc, char ** const argv) {
         }
 
         /* if we just closed the most recent file or haven't opened one yet, open a new one */
-        if (!fh) {
+        if (!fh && logging_path) {
             /* construct timestamp in ISO 8601 format, no separators, rounded down to seconds */
             struct tm unixtime_struct;
             gmtime_r(&(time_t) { packet_time_microseconds / 1000000ULL }, &unixtime_struct);
@@ -367,7 +370,7 @@ int main(const int argc, char ** const argv) {
         shared_memory_ringbuffer_send(shm, sizeof(buf->logging_header) + packet_size);
 
         /* write the packet to the current output file. WARNING: this should not be a file on sd */
-        if (!fwrite(buf, sizeof(buf->logging_header) + packet_size_padded, 1, fh))
+        if (fh && !fwrite(buf, sizeof(buf->logging_header) + packet_size_padded, 1, fh))
             NOPE("%s: fwrite(): %s\n", progname, strerror(errno));
 
         text_packet(buf->packet, packet_size);
