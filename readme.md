@@ -1,4 +1,4 @@
-# `cobs_to_disk`
+# `cobs_to_shm`
 
 This repository implements the Linux end of the interface between the DAQ microcontroller and soft-realtime logging and processing environment on the Linux SBC, as well as some simple examples of how to interact with the resulting sample data, both in realtime and in postprocessing.
 
@@ -16,12 +16,12 @@ Example soft-realtime reader code is available natively for C and Python, which 
 
 Invoke with one argument for no logging:
 
-    ./cobs_to_disk /dev/tty.usbmodem1301
-    ./scope.py shm:cobs_to_disk
+    ./cobs_to_shm /dev/tty.usbmodem1301
+    ./scope.py shm
 
 Invoke with two arguments for logging, and pipe the output into logic which will move the resulting files to some final path:
 
-    ./cbs_to_disk /dev/tty.usbmodem1301 /dev/shm/ | xargs -I file mv file /final/path/
+    ./cobs_to_shm /dev/tty.usbmodem1301 /dev/shm/ | xargs -I file mv file /final/path/
 
 ## References
 
