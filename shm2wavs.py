@@ -18,7 +18,7 @@ def main():
 
     # do a bunch of boilerplate to figure out where we are getting input from
     if len(sys.argv) > 1:
-        if 'shm:' in sys.argv[1]:
+        if 'shm' in sys.argv[1]:
             try:
                 from shared_memory_ringbuffer_reader import shared_memory_ringbuffer_generator
             except:
@@ -29,7 +29,7 @@ def main():
                 for packet_with_logging_header in shared_memory_ringbuffer_generator(source):
                     yield packet_with_logging_header[8:]
 
-            input_source = sys.argv[1].split(':')[1]
+            input_source = sys.argv[1].split(':')[1] if 'shm:' in sys.argv[1] else 'cobs_to_disk'
             yield_packet_bytes_function = yield_from_shm_and_strip_logging_header
         elif ':' in sys.argv[1]:
             address, port = sys.argv[1].split(':')
