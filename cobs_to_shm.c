@@ -285,7 +285,7 @@ int main(const int argc, char ** const argv) {
      packets, which allows them to be shared with zero or more listening downstream
      processes in a zero-copy scheme, with no possibility of a slow reader blocking the
      writer or other readers */
-    struct shared_memory_ringbuffer * shm = shared_memory_ringbuffer_writer_init("cobs_to_disk", 4194304, sizeof(*buf));
+    struct shared_memory_ringbuffer * shm = shared_memory_ringbuffer_writer_init("/cobs_to_shm", 4194304, sizeof(*buf));
 
     /* sleep a bit to give simultaneously-started readers a chance to connect for determinism */
     usleep(200000);
