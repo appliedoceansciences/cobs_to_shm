@@ -263,6 +263,8 @@ int main(const int argc, char ** const argv) {
 
     if (logging_path)
         fprintf(stderr, "%s: output files will be staged in %s\n", progname, logging_path);
+    else
+        fprintf(stderr, "%s: logging is disabled\n", progname);
 
     /* todo: add some sort of check that the logging path is a tmpfs and not a microsd card */
 
