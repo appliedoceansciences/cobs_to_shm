@@ -328,12 +328,10 @@ int main(const int argc, char ** const argv) {
 
         /* if rounding down gives a time later than the file start time, we need to close
          the old file and then create a new one in the next step */
-        if (packet_time_microseconds_rounded_down_to_10s > time_microseconds_file_start) {
-            if (fh) {
-                fclose(fh);
-                printf("%s\n", path);
-                free(path);
-            }
+        if (fh && packet_time_microseconds_rounded_down_to_10s > time_microseconds_file_start) {
+            fclose(fh);
+            printf("%s\n", path);
+            free(path);
             fh = NULL;
         }
 
