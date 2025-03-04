@@ -6,7 +6,7 @@ Type=simple
 User=aos
 Group=aos
 Restart=always
-ExecStart=sh -c "sleep 2 && exec /usr/local/bin/cobs_to_shm /dev/ttyACM0"
+ExecStart=sh -c "sleep 4 && exec /usr/local/bin/cobs_to_shm /dev/ttyACM0"
 LimitNICE=-20
 
 [Install]
