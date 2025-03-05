@@ -17,7 +17,7 @@ Example soft-realtime reader code is available natively for C and Python, which 
 Invoke with one argument for no logging:
 
     ./cobs_to_shm /dev/tty.usbmodem1301
-    ./scope.py shm
+    ./packet_health.py shm
 
 Invoke with two arguments for logging, and pipe the output into logic which will move the resulting files to some final path:
 
