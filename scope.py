@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 import sys
-import base64
-import struct
-from collections import namedtuple
 import threading
 import queue
-import math
-import time
 import socket
 import numpy as np
 
