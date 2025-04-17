@@ -129,10 +129,9 @@ static int open_serial_port(const char * const path_and_maybe_baud) {
 
     free(path);
 
-#if 1
+    /* immediately discard nonblock flag, so that reads only return 0 on eof */
     if (-1 == fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NONBLOCK))
-        NOPE("%s: could not fcntl(O_NONBLOCK): %s\n", __func__, strerror(errno));
-#endif
+        NOPE("%s: could not fcntl(~O_NONBLOCK): %s\n", __func__, strerror(errno));
 
     /* get the current termios settings for the serial device */
     struct termios ts;
@@ -183,7 +182,7 @@ static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int f
     while (1) {
         /* read one byte */
         unsigned char code;
-        if (-1 == read(fd, &code, sizeof(code))) return -1;
+        if (-1 == read(fd, &code, 1)) return -1;
 
         /* got an end byte */
         if (0 == code) break;
@@ -193,7 +192,7 @@ static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int f
             fprintf(stderr, WARNING_ANSI " %s: missing end byte\n", __func__);
 
             /* discard all further bytes until we see a zero byte, then reset */
-            do if (-1 == read(fd, &code, sizeof(code))) return -1;
+            do if (-1 == read(fd, &code, 1)) return -1;
             while (code);
 
             return read_escaped_frame(out, max_plain_size, fd);
@@ -314,7 +313,7 @@ int main(const int argc, char ** const argv) {
                 fprintf(stderr, "%s: %s\n", progname, strerror(errno));
             break;
         }
-        else if (!ret) break;
+        else if (!ret) break; /* eof */
 
         const size_t packet_size = ret;
         const unsigned long long packet_time_microseconds = current_time_in_unix_microseconds();
