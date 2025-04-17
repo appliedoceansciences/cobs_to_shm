@@ -32,7 +32,8 @@ def main():
     print('%u channels, sample rate %g sps' % (C, fs), file=sys.stderr)
 
     while packet:
-        print('\rmin: %d, max: %d' % (np.min(packet.samples), np.max(packet.samples)), file=sys.stderr, end='')
+        print('          \rmin: %d, max: %d' % (np.min(packet.samples), np.max(packet.samples)),
+              file=sys.stderr, end='')
 
         packet = next(child, None)
 
