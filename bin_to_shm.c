@@ -76,6 +76,7 @@ int main(const int argc, char ** const argv) {
         const size_t packet_size = logging_header & 65535U;
         const size_t packet_size_padded = (packet_size + 7) & ~7;
 
+        buf->logging_header = logging_header;
         if (!fread(buf->packet, packet_size_padded, 1, stdin)) break;
 
         /* zero out any padding we're going to write. note we can do this only because we
