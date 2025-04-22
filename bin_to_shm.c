@@ -48,6 +48,8 @@ int main(const int argc, char ** const argv) {
         unsigned char packet[65528];
     } * buf = NULL;
 
+    setvbuf(stdin, NULL, _IONBF, 0);
+
     static_assert(!(sizeof(*buf) % 16), "max shared memory slot size must be a multiple of 16");
 
     /* establish a shared-memory segment into which we will place the de-escaped incoming
