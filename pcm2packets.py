@@ -6,7 +6,7 @@
 import struct
 import sys
 
-def pcm2packets(src, input_dtype_string, C, sample_rate):
+def pcm2packets(src, input_dtype_string, C, sample_rate, t0):
     itemsize = 2 if input_dtype_string == 'int16' else 4
 
     # number of samples per packet is maximum number s.t. packet size is not more than 1500 bytes
@@ -25,7 +25,7 @@ def pcm2packets(src, input_dtype_string, C, sample_rate):
         if len(data_segment_bytes) < itemsize * C * T: break
 
         samples_yielded += T
-        timestamp_ticks = round((t + samples_yielded / sample_rate) * 1e6 / 16) % 281474976710656
+        timestamp_ticks = round((t0 + samples_yielded / sample_rate) * 1e6 / 16) % 281474976710656
         timestamp_lsbs = (timestamp_ticks) & 65535
         timestamp_msbs = (timestamp_ticks) >> 16
 
@@ -42,18 +42,21 @@ def pcm2packets(src, input_dtype_string, C, sample_rate):
 
         seqnum = (seqnum + 1) % 65536
 
-input_dtype_string = 'int16'
-sample_rate = 31250.0
-C = 1
-t = 1725898437.0
+def main():
+    input_dtype_string = 'int16'
+    sample_rate = 31250.0
+    C = 1
+    t0 = 1725898437.0
 
-# loop over pairs of arguments
-for key, value in zip(sys.argv[1::2], sys.argv[2::2]):
-    if key == 'fs': sample_rate = float(value)
-    if key == 'C': C = int(value)
-    if key == 'dtype': input_dtype_string = value
-    if key == 't0': t = float(value)
+    # loop over pairs of arguments
+    for key, value in zip(sys.argv[1::2], sys.argv[2::2]):
+        if key == 'fs': sample_rate = float(value)
+        if key == 'C': C = int(value)
+        if key == 'dtype': input_dtype_string = value
+        if key == 't0': t0 = float(value)
 
-for logging_header_bytes, packet_bytes, padding in pcm2packets(sys.stdin.buffer, input_dtype_string, C, sample_rate):
-    sys.stdout.buffer.write(logging_header_bytes + packet_bytes + padding)
-    sys.stdout.buffer.flush()
+    for logging_header_bytes, packet_bytes, padding in pcm2packets(sys.stdin.buffer, input_dtype_string, C, sample_rate, t0):
+        sys.stdout.buffer.write(logging_header_bytes + packet_bytes + padding)
+        sys.stdout.buffer.flush()
+
+main()
