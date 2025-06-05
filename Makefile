@@ -4,17 +4,7 @@
 # make clean && make CFLAGS="-Og -g -fno-inline -fsanitize=address,undefined"
 
 # overrideable vars used in implicit make rules
-# only default to -march=native if not on an arm mac
-ifeq (,$(findstring arm64,$(shell uname -m)))
-TARGET_ARCH ?= -march=native
-endif
-
 CFLAGS ?= -Os
-# older versions of gcc need -fcx-limited-range, in others its effect is implied by -ffinite-math-only
-ifeq (0,$(shell ${CC} -fcx-limited-range -x c -o /dev/null -c - < /dev/null 2>/dev/null; echo $$?))
-	CFLAGS += -fcx-limited-range
-endif
-
 CPPFLAGS += -Wall -Wextra -Wshadow -Wmissing-prototypes
 LDFLAGS += ${CFLAGS}
 
