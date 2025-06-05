@@ -7,7 +7,7 @@ from shared_memory_ringbuffer_reader import shared_memory_ringbuffer_generator
 
 if len(sys.argv) < 2:
     print('usage: %s ip:port [shm:/shm]' % sys.argv[0])
-    exit(1)
+    sys.exit(1)
 
 udp_dest_host, udp_dest_port = sys.argv[1].split(':')
 udp_dest_port = int(udp_dest_port)
