@@ -1,3 +1,5 @@
+/* utility code for bench testing of the pipeline */
+
 /* library functions */
 #include "shared_memory_ringbuffer.h"
 

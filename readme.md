@@ -39,7 +39,7 @@ Invoke with two arguments for logging, and pipe the output into logic which will
 
 ### Modules used by the above
 
-- `shared_memory_ringbuffer_reader.py` and `shared_memory_ringbuffer.c`: Python and C modules which connects to the shared memory ring buffer and yields the packets one at a time to calling code. The Python module can also be run as a standalone process, and will yield the stream of packets to `stdout` in the same logging format emitted by `cobs_to_shm`.
+- `shared_memory_ringbuffer_reader.py` and `shared_memory_ringbuffer.c`: Python and C modules with functions to read from the shared memory ring buffer and return packets one at a time to calling code. The Python module can also be run as a standalone process, and will yield the stream of packets to `stdout` in the same logging format emitted by `cobs_to_shm`.
 
 - `parse_acoustic_packets.py`: Python module which ingests the acoustic packets and yields packets worth of samples at a time to calling code, suitable for developing soft-realtime DSP applications. Can be run as a standalone process, which will ingest the logging format emitted by `cobs_to_shm` and yield raw PCM on `stdout`, suitable for piping into `ffmpeg` or any other software which expects PCM.
 
