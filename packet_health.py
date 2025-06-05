@@ -14,11 +14,10 @@ def yield_from_shm_and_strip_logging_header(source):
         yield packet_with_logging_header[8:]
 
 def main():
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 1 or sys.stdin.isatty():
         input_source = sys.argv[1].split(':')[1] if len(sys.argv) > 1 and 'shm:' in sys.argv[1] else '/cobs_to_shm'
         yield_packet_bytes_function = yield_from_shm_and_strip_logging_header
     else:
-        print('listening for input on stdin. if shm input is desired, pass "shm" as the sole argument', file=sys.stderr)
         input_source = sys.stdin.buffer
         yield_packet_bytes_function = yield_packet_bytes_from_log_stream
 
