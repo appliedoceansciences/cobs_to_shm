@@ -20,14 +20,24 @@ def pcm2packets(src, input_dtype_string, C, sample_rate, t0):
 
     samples_yielded = 0
 
+    # convert floating point absolute time in unix seconds to integer number of 16-us ticks
+    t0_ticks = round(t0 * 1e6 / 16)
+
+    # number of 16-microsecond ticks
+    ticks_per_sample = 1e6 / (sample_rate * 16)
+
     while True:
         data_segment_bytes = src.read(itemsize * C * T)
         if len(data_segment_bytes) < itemsize * C * T: break
 
         samples_yielded += T
-        timestamp_ticks = round((t0 + samples_yielded / sample_rate) * 1e6 / 16) % 281474976710656
-        timestamp_lsbs = (timestamp_ticks) & 65535
-        timestamp_msbs = (timestamp_ticks) >> 16
+
+        # construct the unix time as a 48-bit number of 16-microsecond ticks in unix time
+        timestamp_ticks = (t0_ticks + round(samples_yielded * ticks_per_sample)) % (1 << 48)
+
+        # break the 48-bit time down into 16 lsbs and 32 msbs
+        timestamp_lsbs = timestamp_ticks & 65535
+        timestamp_msbs = timestamp_ticks >> 16
 
         logging_header_bytes = struct.pack('<HHI',
             packet_size, timestamp_lsbs, timestamp_msbs)
