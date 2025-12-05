@@ -110,7 +110,7 @@ static speed_t parse_baud_rate(const unsigned long desired) {
             921600 == desired ? B921600 :
 #endif
 #endif
-            -1);
+            desired);
 }
 
 static int open_serial_port(const char * const path_and_maybe_baud) {
