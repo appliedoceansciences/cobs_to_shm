@@ -107,11 +107,34 @@ static speed_t parse_baud_rate(const unsigned long desired) {
             230400 == desired ? B230400 :
 #ifdef B460800
             460800 == desired ? B460800 :
+#endif
 #ifdef B921600
             921600 == desired ? B921600 :
 #endif
+#ifdef B1000000
+            1000000 == desired ? B1000000 :
 #endif
-            /* TODO: allow higher baud rate macros if defined */
+#ifdef B1152000
+            1152000 == desired ? B1152000 :
+#endif
+#ifdef B1500000
+            1500000 == desired ? B1500000 :
+#endif
+#ifdef B2000000
+            2000000 == desired ? B2000000 :
+#endif
+#ifdef B2500000
+            2500000 == desired ? B2500000 :
+#endif
+#ifdef B3000000
+            3000000 == desired ? B3000000 :
+#endif
+#ifdef B3500000
+            3500000 == desired ? B3500000 :
+#endif
+#ifdef B4000000
+            4000000 == desired ? B4000000 :
+#endif
             desired);
 }
 
