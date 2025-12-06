@@ -75,6 +75,7 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
 /* useful macros */
 #define WARNING_ANSI "\x1B[35;1mwarning:\x1B[0m"
@@ -110,17 +111,17 @@ static speed_t parse_baud_rate(const unsigned long desired) {
             921600 == desired ? B921600 :
 #endif
 #endif
+            /* TODO: allow higher baud rate macros if defined */
             desired);
 }
 
 static int open_serial_port(const char * const path_and_maybe_baud) {
-    speed_t baud = (speed_t)-1;
+    unsigned long baud = 0;
     char * path = strdup(path_and_maybe_baud);
     const char * const comma = strchr(path, ',');
     if (comma) {
         path[comma - path] = '\0';
-        baud = parse_baud_rate(strtoul(comma + 1, NULL, 10));
-        if ((speed_t)-1 == baud) NOPE("%s: baud rate %s not supported\n", __func__, comma + 1);
+        baud = strtoul(comma + 1, NULL, 10);
     }
 
     /* open the serial fd, non blocking (otherwise the open call itself blocks) */
@@ -143,10 +144,6 @@ static int open_serial_port(const char * const path_and_maybe_baud) {
     /* control lines ignored, and DTR will be automatically lowered when this process ends */
     ts.c_cflag |= HUPCL | CLOCAL;
 
-    /* if input text specified a baud rate, attempt to set it */
-    if (baud != (speed_t)-1)
-        if (-1 == cfsetspeed(&ts, baud)) NOPE("%s: cfsetspeed(): %s\n", __func__, strerror(errno));
-
     /* return after 0.1 seconds if at least one byte has been received, regardless of
      whether full reads have been satisfied. note that this could in theory incur up to
      min(100 ms, packet period) of error in the timestamps prepended to packets by the
@@ -157,6 +154,20 @@ static int open_serial_port(const char * const path_and_maybe_baud) {
     ts.c_cc[VTIME] = 1;
 
     if (-1 == tcsetattr(fd, TCSANOW, &ts)) NOPE("%s: tcsetattr: %s\n", __func__, strerror(errno));
+
+    /* if input text specified a baud rate, attempt to set it */
+    if (baud) {
+        if (-1 == cfsetspeed(&ts, parse_baud_rate(baud)) ||
+            -1 == tcsetattr(fd, TCSANOW, &ts)) {
+#ifdef __APPLE__
+            /* use weakly-documented ioctl on macos for setting higher speeds */
+            if (-1 == ioctl(fd, 0x80045402, &(speed_t) { baud } ))
+                NOPE("%s: ioctl(IOSSIOSPEED): %s\n", __func__, strerror(errno));
+#else
+            NOPE("%s: tcsetattr: %s\n", __func__, strerror(errno));
+#endif
+        }
+    }
 
     /* attempt to clear stale data */
     if (-1 == tcflush(fd, TCIOFLUSH)) NOPE("%s: cannot tcflush: %s\n", __func__, strerror(errno));
