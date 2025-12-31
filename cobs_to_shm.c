@@ -199,7 +199,7 @@ static int open_serial_port(const char * const path_and_maybe_baud) {
 }
 
 static ssize_t readall(int fd, const void * buf, const size_t size) {
-    /* loop on read() until we have written all requested bytes*/
+    /* loop on read() until we have read all requested bytes */
     for (ssize_t size_read = 0; (size_t)size_read < size; ) {
         const ssize_t now = read(fd, (char *)buf + size_read, size - size_read);
         if (-1 == now) return -1;
