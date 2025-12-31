@@ -229,7 +229,8 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
             do if (-1 == read(fd, &code, 1)) return -1;
             while (code);
 
-            return read_escaped_frame(out, max_plain_size, fd);
+            dst = out;
+            continue;
         }
 
         /* now we can do a longer read of the expected number of bytes straight into the
