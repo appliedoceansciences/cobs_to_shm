@@ -209,9 +209,9 @@ static ssize_t readall(int fd, const void * buf, const size_t size) {
     return size;
 }
 
-static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int fd) {
+static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_plain_size, int fd) {
     /* note: "out" must be large enough to hold an extra final appended zero */
-    unsigned char * dst = out, * plain = out;
+    unsigned char * dst = out;
 
     while (1) {
         /* read one byte */
@@ -222,7 +222,7 @@ static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int f
         if (0 == code) break;
 
         /* if we have gone too long without seeing an end byte... */
-        if ((size_t)(dst - plain) + code > max_plain_size) {
+        if ((size_t)(dst - out) + code > max_plain_size) {
             fprintf(stderr, WARNING_ANSI " %s: missing end byte\n", __func__);
 
             /* discard all further bytes until we see a zero byte, then reset */
@@ -243,7 +243,7 @@ static ssize_t read_escaped_frame(void * out, const size_t max_plain_size, int f
         if (code != 0xFF) *(dst++) = 0;
     }
 
-    return dst > plain ? (dst - plain) - 1 : 0;
+    return dst > out ? (dst - out) - 1 : 0;
 }
 
 static int text_packet(void * packet_buffer, const size_t packet_size) {
