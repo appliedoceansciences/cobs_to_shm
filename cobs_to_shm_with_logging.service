@@ -1,0 +1,14 @@
+[Unit]
+Description=cobs_to_shm
+
+[Service]
+Type=simple
+User=daq
+Group=dialout
+Restart=always
+RestartSec=4
+ExecStart=/usr/local/bin/cobs_to_shm_with_logging.sh /dev/ttyACM0 /dev/shm/
+LimitNICE=-20
+
+[Install]
+WantedBy=multi-user.target
