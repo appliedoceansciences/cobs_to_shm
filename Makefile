@@ -32,6 +32,12 @@ shared_memory_ringbuffer.o : shared_memory_ringbuffer.h
 
 *.o : Makefile
 
+install : cobs_to_shm
+	install -C cobs_to_shm /usr/local/bin/
+
+uninstall :
+	$(RM) /usr/local/bin/cobs_to_shm
+
 clean :
 	$(RM) -rf *.o *.dSYM ${TARGETS}
-.PHONY: clean all
+.PHONY: clean install uninstall all
