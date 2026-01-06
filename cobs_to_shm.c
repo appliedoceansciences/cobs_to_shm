@@ -334,11 +334,11 @@ int main(const int argc, char ** const argv) {
 
     unsigned long long packet_time_previous = 0;
 
+    /* get the next slot in the ring buffer */
+    buf = shared_memory_ringbuffer_acquire(shm);
+
     /* loop over whole packets */
     while (1) {
-        /* get the next slot in the ring buffer */
-        if (!buf) buf = shared_memory_ringbuffer_acquire(shm);
-
         const ssize_t ret = read_escaped_frame(buf->packet, sizeof(buf->packet), fd_serial);
         if (got_sigterm_or_sigint) break;
 
@@ -416,7 +416,8 @@ int main(const int argc, char ** const argv) {
         if (elapsed >= 100000)
             fprintf(stderr, WARNING_ANSI " %s: output took %u ms\n", progname, elapsed / 1000U);
 
-        buf = NULL;
+        /* get the next slot in the ring buffer */
+        buf = shared_memory_ringbuffer_acquire(shm);
     }
 
     fprintf(stderr, "%s: exiting\n", progname);
