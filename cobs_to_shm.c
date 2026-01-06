@@ -76,6 +76,7 @@
 #include <sys/stat.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <arpa/inet.h>
 
 /* useful macros */
 #define WARNING_ANSI "\x1B[35;1mwarning:\x1B[0m"
@@ -292,6 +293,8 @@ int main(const int argc, char ** const argv) {
         exit(EXIT_FAILURE);
     }
 
+    unsigned short udp_input_port = 24597;
+
     const char * escaped_serial_path = argv[1];
     const char * logging_path = argc > 2 ? argv[2] : NULL;
 
@@ -327,6 +330,21 @@ int main(const int argc, char ** const argv) {
 
     /* open the given path, possibly parsing a baud rate from it, in raw mode */
     const int fd_serial = open_serial_port(escaped_serial_path);
+
+    /* open a udp socket for receiving any application-specific nonacoustic packets and
+     interleaving them with the outgoing acoustic packets in the shm and logged outputs */
+    int fd_udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (-1 == fd_udp) NOPE("%s: cannot socket(): %s\n", progname, strerror(errno));
+
+    if (-1 == fcntl(fd_udp, F_SETFL, fcntl(fd_udp, F_GETFL, 0) | O_NONBLOCK))
+        NOPE("%s: could not fcntl(O_NONBLOCK): %s\n", __func__, strerror(errno));
+
+    if (-1 == bind(fd_udp, (struct sockaddr *)&(struct sockaddr_in) {
+        .sin_family = AF_INET,
+        .sin_port = htons(udp_input_port),
+        .sin_addr.s_addr = htonl(INADDR_ANY)
+    }, sizeof(struct sockaddr_in)))
+        NOPE("%s: cannot bind(%d): %s\n", progname, udp_input_port, strerror(errno));
 
     unsigned long long time_microseconds_file_start = 0;
     FILE * fh = NULL;
@@ -418,6 +436,37 @@ int main(const int argc, char ** const argv) {
 
         /* get the next slot in the ring buffer */
         buf = shared_memory_ringbuffer_acquire(shm);
+
+        /* loop over any udp packets that arrived during this acoustic packet */
+        /* TODO: ideally we would use poll() and react to each of these and the acoustic
+         packets strictly in the order they occur */
+        for (ssize_t recv_ret; (recv_ret = recv(fd_udp, buf->packet, sizeof(buf->packet), 0)) > 0; ) {
+            const size_t udp_packet_size = recv_ret;
+
+            /* for now, timestamp is the same as that of the acoustic packet during which
+             the nonacoustic packet arrived. we really only care about preserving the order
+             of the packets though, and we COULD use SO_TIMESTAMP to get a better (earlier,
+             potentially non monotonic) logging timestamp for the nonacoustic packet */
+            buf->logging_header = ((packet_time_microseconds / 16) << 16) | udp_packet_size;
+
+            /* round packet size up to the next multiple of 8, and write up to 7 bytes of padding, s.t.
+             the next packet will be eight-byte-aligned within the output */
+            const size_t udp_packet_size_padded = (udp_packet_size + 7) & ~7;
+
+            /* zero out any padding we're going to write */
+            if (udp_packet_size_padded != udp_packet_size)
+                memset(buf->packet + udp_packet_size, 0, udp_packet_size_padded - udp_packet_size);
+
+            /* release to readers */
+            shared_memory_ringbuffer_send(shm, sizeof(buf->logging_header) + udp_packet_size);
+
+            /* write the packet to the current output file. WARNING: this should not be a file on sd */
+            if (!fwrite(buf, sizeof(buf->logging_header) + udp_packet_size_padded, 1, fh))
+                NOPE("%s: fwrite(): %s\n", progname, strerror(errno));
+
+            /* get the next slot in the ring buffer */
+            buf = shared_memory_ringbuffer_acquire(shm);
+        }
     }
 
     fprintf(stderr, "%s: exiting\n", progname);
@@ -427,6 +476,8 @@ int main(const int argc, char ** const argv) {
         printf("%s\n", path);
         free(path);
     }
+
+    close(fd_udp);
 
     return 0;
 }
