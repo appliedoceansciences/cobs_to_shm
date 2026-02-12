@@ -1,0 +1,13 @@
+[Unit]
+Description=cobs_to_shm
+
+[Service]
+Type=simple
+Group=dialout
+Restart=always
+RestartSec=4
+ExecStart=/usr/local/bin/cobs_to_shm /dev/ttyACM0
+LimitNICE=-20
+
+[Install]
+WantedBy=multi-user.target
