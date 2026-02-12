@@ -6,7 +6,7 @@ Type=simple
 Group=dialout
 Restart=always
 RestartSec=4
-ExecStart=/usr/local/bin/cobs_to_shm /dev/ttyACM0
+ExecStart=sh -c "exec /usr/local/bin/cobs_to_shm /dev/serial/by-id/*SCARI*if00"
 LimitNICE=-20
 
 [Install]
