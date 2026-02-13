@@ -217,7 +217,7 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
     while (1) {
         /* read one byte */
         unsigned char code;
-        if (-1 == read(fd, &code, 1)) return -1;
+        if (read(fd, &code, 1) <= 0) return -1;
 
         /* got an end byte */
         if (0 == code) break;
@@ -227,7 +227,7 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
             fprintf(stderr, WARNING_ANSI " %s: missing end byte\n", __func__);
 
             /* discard all further bytes until we see a zero byte, then reset */
-            do if (-1 == read(fd, &code, 1)) return -1;
+            do if (read(fd, &code, 1) <= 0) return -1;
             while (code);
 
             dst = out;
