@@ -236,7 +236,7 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
         /* now we can do a longer read of the expected number of bytes straight into the
          output buffer, without having to escape anything or read one byte at a time, or
          worry about doing a blocking read not temporally aligned with the presence of data */
-        if (-1 == readall(fd, dst, code - 1)) return -1;
+        if (code != 1 && -1 == readall(fd, dst, code - 1)) return -1;
 
         dst += code - 1;
 
