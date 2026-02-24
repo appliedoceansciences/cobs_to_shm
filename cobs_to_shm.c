@@ -84,6 +84,10 @@
 #define NOPE(...) do { fprintf(stderr, ERROR_ANSI " " __VA_ARGS__); exit(EXIT_FAILURE); } while(0)
 #define alloc_sprintf(...) ({ char * _tmp; if (asprintf(&_tmp, __VA_ARGS__) <= 0) abort(); _tmp ; })
 
+#ifdef __APPLE__
+#define fread_unlocked fread
+#endif
+
 static unsigned long long current_time_in_unix_microseconds(void) {
     struct timespec timespec;
     clock_gettime(CLOCK_REALTIME, &timespec);
@@ -139,7 +143,7 @@ static speed_t parse_baud_rate(const unsigned long desired) {
             desired);
 }
 
-static int open_serial_port(const char * const path_and_maybe_baud) {
+static FILE * open_serial_port(const char * const path_and_maybe_baud) {
     unsigned long baud = 0;
     char * path = strdup(path_and_maybe_baud);
     const char * const comma = strchr(path, ',');
@@ -195,28 +199,17 @@ static int open_serial_port(const char * const path_and_maybe_baud) {
     /* attempt to clear stale data */
     if (-1 == tcflush(fd, TCIOFLUSH)) NOPE("%s: cannot tcflush: %s\n", __func__, strerror(errno));
 
-    return fd;
+    return fdopen(fd, "r");
 }
 
-static ssize_t readall(int fd, const void * buf, const size_t size) {
-    /* loop on read() until we have read all requested bytes */
-    for (ssize_t size_read = 0; (size_t)size_read < size; ) {
-        const ssize_t now = read(fd, (char *)buf + size_read, size - size_read);
-        if (-1 == now) return -1;
-        else if (!now) return size_read;
-        size_read += now;
-    }
-    return size;
-}
-
-static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_plain_size, int fd) {
+static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_plain_size, FILE * fh) {
     /* note: "out" must be large enough to hold an extra final appended zero */
     unsigned char * dst = out;
 
     while (1) {
         /* read one byte */
-        unsigned char code;
-        if (read(fd, &code, 1) <= 0) return -1;
+        int code;
+        if ((code = getc_unlocked(fh)) < 0) return -1;
 
         /* got an end byte */
         if (0 == code) break;
@@ -226,7 +219,7 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
             fprintf(stderr, WARNING_ANSI " %s: missing end byte\n", __func__);
 
             /* discard all further bytes until we see a zero byte, then reset */
-            do if (read(fd, &code, 1) <= 0) return -1;
+            do if ((code = getc_unlocked(fh)) < 0) return -1;
             while (code);
 
             dst = out;
@@ -236,7 +229,7 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
         /* now we can do a longer read of the expected number of bytes straight into the
          output buffer, without having to escape anything or read one byte at a time, or
          worry about doing a blocking read not temporally aligned with the presence of data */
-        if (code != 1 && -1 == readall(fd, dst, code - 1)) return -1;
+        if (code != 1 && !fread_unlocked(dst, code - 1, 1, fh)) return -1;
 
         dst += code - 1;
 
@@ -327,7 +320,7 @@ int main(const int argc, char ** const argv) {
     usleep(200000);
 
     /* open the given path, possibly parsing a baud rate from it, in raw mode */
-    const int fd_serial = open_serial_port(escaped_serial_path);
+    FILE * fh_serial = open_serial_port(escaped_serial_path);
 
     /* open a udp socket for receiving any application-specific nonacoustic packets and
      interleaving them with the outgoing acoustic packets in the shm and logged outputs */
@@ -355,7 +348,7 @@ int main(const int argc, char ** const argv) {
 
     /* loop over whole packets */
     while (1) {
-        const ssize_t ret = read_escaped_frame(buf->packet, sizeof(buf->packet), fd_serial);
+        const ssize_t ret = read_escaped_frame(buf->packet, sizeof(buf->packet), fh_serial);
         if (got_sigterm_or_sigint) break;
 
         /* if read_escaped_frame returns -1, we either got eof or an error on the input */
