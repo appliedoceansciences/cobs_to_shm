@@ -172,8 +172,7 @@ static int open_serial_port(const char * const path_and_maybe_baud) {
      whether full reads have been satisfied. note that this could in theory incur up to
      min(100 ms, packet period) of error in the timestamps prepended to packets by the
      logger, but in practice the kernel usb code seems to (almost?) always return on the
-     boundary of a corresponding write by the other end. NOTE: this seems to have no effect
-     when using poll() to gate the reads, but posix makes no such guarantees, so keep it */
+     boundary of a corresponding write by the other end */
     ts.c_cc[VMIN] = 1;
     ts.c_cc[VTIME] = 1;
 
@@ -251,7 +250,6 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
 static int text_packet(void * packet_buffer, const size_t packet_size) {
     unsigned char * restrict const byte = packet_buffer;
 
-    /* TODO: refine this */
     size_t printable_characters = 0;
     for ( ; printable_characters < packet_size; printable_characters++) {
         if (byte[printable_characters] == '\r' ||
