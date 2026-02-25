@@ -199,7 +199,13 @@ static FILE * open_serial_port(const char * const path_and_maybe_baud) {
     /* attempt to clear stale data */
     if (-1 == tcflush(fd, TCIOFLUSH)) NOPE("%s: cannot tcflush: %s\n", __func__, strerror(errno));
 
-    return fdopen(fd, "r");
+    FILE * fh = fdopen(fd, "r");
+    if (!fh) NOPE("%s: fdopen(): %s\n", __func__, strerror(errno));
+
+    /* hopefully allow fread() to be faster even when it is not fread_unlocked() */
+    flockfile(fh);
+
+    return fh;
 }
 
 static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_plain_size, FILE * fh) {
