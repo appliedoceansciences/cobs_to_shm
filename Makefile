@@ -34,6 +34,7 @@ shared_memory_ringbuffer.o : shared_memory_ringbuffer.h
 
 install : cobs_to_shm
 	install -C cobs_to_shm /usr/local/bin/
+	install -C shared_memory_ringbuffer_reader.py /usr/local/bin/
 
 uninstall :
 	$(RM) /usr/local/bin/cobs_to_shm
