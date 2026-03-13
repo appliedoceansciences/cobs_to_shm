@@ -292,6 +292,7 @@ int main(const int argc, char ** const argv) {
 
     unsigned short udp_input_port = 24597;
 
+    const char * shm_name = getenv("SHM_NAME") ?: "/cobs_to_shm";
     const char * escaped_serial_path = argv[1];
     const char * logging_path = argc > 2 ? argv[2] : NULL;
 
@@ -319,7 +320,7 @@ int main(const int argc, char ** const argv) {
      packets, which allows them to be shared with zero or more listening downstream
      processes in a zero-copy scheme, with no possibility of a slow reader blocking the
      writer or other readers */
-    struct shared_memory_ringbuffer * shm = shared_memory_ringbuffer_writer_init("/cobs_to_shm", 4194304, sizeof(*buf));
+    struct shared_memory_ringbuffer * shm = shared_memory_ringbuffer_writer_init(shm_name, 4194304, sizeof(*buf));
     if (MAP_FAILED == shm || !shm) exit(EXIT_FAILURE);
 
     /* sleep a bit to give simultaneously-started readers a chance to connect for determinism */
