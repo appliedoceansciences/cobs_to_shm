@@ -28,6 +28,9 @@ int main(int argc, char ** const argv) {
     const char * shm_name = argc > 1 ? argv[1] : "/cobs_to_shm";
     const char * logging_path = argc > 2 ? argv[2] : "/dev/shm";
 
+    /* ensure that stdout will not be full-buffered */
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     fprintf(stderr, "%s: output files will be staged in %s\n", progname, logging_path);
 
     /* install a signal handler so that we can stop cleanly on sigint or sigterm */
