@@ -1,5 +1,5 @@
 [Unit]
-Description=cobs_to_shm
+Description=shm_logger
 
 [Service]
 Type=simple
@@ -7,7 +7,7 @@ User=daq
 Group=dialout
 Restart=always
 RestartSec=4
-ExecStart=/usr/local/bin/cobs_to_shm_with_logging.sh /dev/ttyACM0 /dev/shm/
+ExecStart=/usr/local/bin/shm_logger.sh /cobs_to_shm /dev/shm/
 LimitNICE=-20
 
 [Install]
