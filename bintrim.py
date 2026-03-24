@@ -17,7 +17,7 @@ duration = None
 for key, value in zip(sys.argv[1::2], sys.argv[2::2]):
     if key == 'start': start = string_to_unix_time_in_microseconds(value)
     if key == 'stop': stop = string_to_unix_time_in_microseconds(value)
-    if key == 'duration': duration = float(value)
+    if key == 'duration': duration = round(float(value) * 1e6)
 
 if duration is not None:
     if stop is not None:
