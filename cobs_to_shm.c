@@ -373,7 +373,6 @@ int main(const int argc, char ** const argv) {
                 fprintf(stderr, "%s: %s\n", progname, strerror(errno));
             break;
         }
-        else if (!ret) break; /* eof */
 
         const size_t packet_size = ret;
         const unsigned long long packet_time_microseconds = current_time_in_unix_microseconds();
