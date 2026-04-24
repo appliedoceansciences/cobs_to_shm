@@ -84,10 +84,6 @@
 #define NOPE(...) do { fprintf(stderr, ERROR_ANSI " " __VA_ARGS__); exit(EXIT_FAILURE); } while(0)
 #define alloc_sprintf(...) ({ char * _tmp; if (asprintf(&_tmp, __VA_ARGS__) <= 0) abort(); _tmp ; })
 
-#ifdef __APPLE__
-#define fread_unlocked fread
-#endif
-
 static unsigned long long current_time_in_unix_microseconds(void) {
     struct timespec timespec;
     clock_gettime(CLOCK_REALTIME, &timespec);
@@ -232,10 +228,23 @@ static ssize_t read_escaped_frame(unsigned char * const out, const size_t max_pl
             continue;
         }
 
-        /* now we can do a longer read of the expected number of bytes straight into the
-         output buffer, without having to escape anything or read one byte at a time, or
-         worry about doing a blocking read not temporally aligned with the presence of data */
-        if (code != 1 && !fread_unlocked(dst, code - 1, 1, fh)) return -1;
+        /* read until next implicit zero, unless we get an unexpected explicit zero */
+        size_t ibyte = 0;
+        for (; ibyte < code - 1U; ibyte++) {
+            int byte;
+            if ((byte = getc_unlocked(fh)) < 0) return -1;
+            else if (0 == byte) break;
+
+            dst[ibyte] = byte;
+        }
+
+        /* if the above loop exited early, reset */
+        if (ibyte != code - 1U) {
+            fprintf(stderr, WARNING_ANSI " %s: unexpected zero byte\n", __func__);
+
+            dst = out;
+            continue;
+        }
 
         dst += code - 1;
 
