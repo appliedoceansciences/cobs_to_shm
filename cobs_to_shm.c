@@ -139,6 +139,22 @@ static speed_t parse_baud_rate(const unsigned long desired) {
             desired);
 }
 
+static void set_baud_rate(const int fd, const unsigned long baud) {
+    struct termios ts;
+    if (-1 == tcgetattr(fd, &ts)) NOPE("%s: tcgetattr: %s\n", __func__, strerror(errno));
+
+    if (-1 == cfsetspeed(&ts, parse_baud_rate(baud)) ||
+        -1 == tcsetattr(fd, TCSANOW, &ts)) {
+#ifdef __APPLE__
+        /* use weakly-documented ioctl on macos for setting higher speeds */
+        if (-1 == ioctl(fd, 0x80045402, &(speed_t) { baud } ))
+            NOPE("%s: ioctl(IOSSIOSPEED): %s\n", __func__, strerror(errno));
+#else
+        NOPE("%s: tcsetattr: %s\n", __func__, strerror(errno));
+#endif
+    }
+}
+
 static FILE * open_serial_port(const char * const path_and_maybe_baud) {
     unsigned long baud = 0;
     char * path = strdup(path_and_maybe_baud);
@@ -179,18 +195,7 @@ static FILE * open_serial_port(const char * const path_and_maybe_baud) {
     if (-1 == tcsetattr(fd, TCSANOW, &ts)) NOPE("%s: tcsetattr: %s\n", __func__, strerror(errno));
 
     /* if input text specified a baud rate, attempt to set it */
-    if (baud) {
-        if (-1 == cfsetspeed(&ts, parse_baud_rate(baud)) ||
-            -1 == tcsetattr(fd, TCSANOW, &ts)) {
-#ifdef __APPLE__
-            /* use weakly-documented ioctl on macos for setting higher speeds */
-            if (-1 == ioctl(fd, 0x80045402, &(speed_t) { baud } ))
-                NOPE("%s: ioctl(IOSSIOSPEED): %s\n", __func__, strerror(errno));
-#else
-            NOPE("%s: tcsetattr: %s\n", __func__, strerror(errno));
-#endif
-        }
-    }
+    if (baud) set_baud_rate(fd, baud);
 
     /* attempt to clear stale data */
     if (-1 == tcflush(fd, TCIOFLUSH)) NOPE("%s: cannot tcflush: %s\n", __func__, strerror(errno));
