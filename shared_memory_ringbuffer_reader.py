@@ -81,8 +81,7 @@ def shared_memory_ringbuffer_generator(shm_name):
     while True:
         shm = shared_memory_ringbuffer_reader_init(shm_name)
         if shm is not None: break
-        print('writer is not running', file=sys.stderr)
-        time.sleep(1)
+        time.sleep(0.05)
 
     seconds_per_packet_num = 0
     seconds_per_packet_den = 0

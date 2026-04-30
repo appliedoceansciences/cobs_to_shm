@@ -51,7 +51,7 @@ int main(int argc, char ** const argv) {
             fprintf(stderr, "%s: waiting for \"%s\"\n", __func__, shm_name);
             printed_not_ready = 1;
         }
-        sleep(1);
+        usleep(50000);
         if (got_sigterm_or_sigint) return 0;
     }
 
