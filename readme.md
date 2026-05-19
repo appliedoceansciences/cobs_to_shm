@@ -31,6 +31,20 @@ Start an additional reader for logging, and pipe the output into logic which wil
 
 Example `.service` files are included which invoke the `cobs_to_shm` and `shm_logger` binaries with appropriate arguments. Note that these assume a `daq` user with a sub-1000 uid (so that systemd does not delete the shm segment) whose home directory contains the destination directory for the resulting logged data. Adjust this logic according to your needs, or create a `daq` user with a sub-1000 uid and associated home directory using `useradd -rm daq`.
 
+## Logged data
+
+The resulting `.bin` files contain a stream of acoustic and possibly nonacoustic packets, each prefixed with an eight byte header containing a packet size and timetamp. Up to seven bytes of padding is added after each packet, if necessary, to ensure that the beginning of the next packet is aligned to eight bytes. The beginnings of the `.bin` files carry no significance and are simply aligned with wall clock time on a best-effort basis - that is, multiple consecutive `.bin` files concatenated together are also a valid `.bin` file, with no gaps. Similarly, multiple `.bin.gz` files can be concatenated together and piped through `gunzip` as if they had always been a single file.
+
+The acoustic packets consist of a header prepended to a block of samples. The samples are signed 16-bit little endian integers, such that the various headers can be peeled off each acoustic packet and the data segments concatenated together, and the result can be interpreted as a continuous stream of PCM audio samples. The included `parse_acoustic_packets.py` script can perform this operation, as follows:
+
+    cat /path/to/*.bin | ./parse_acoustic_packets.py > combined_raw_pcm_audio.raw
+
+The resulting raw PCM audio can be processed as-is, or a `.wav` header can be prepended to it if necessary:
+
+    ./prepend_wav_header.py combined_raw_pcm_audio.raw > /tmp/combined_audio.wav
+
+Note that since `.wav` files must include the file length in the header, it is not possible to prepend a `.wav` header to a stream of data - a temporary file of not more than 4 gigabytes must first be created. If streaming operation is necessary, omit the `.wav` header and operate on just the raw PCM data.
+
 ## Components
 
 ### Standalone applications
