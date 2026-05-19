@@ -14,6 +14,10 @@ If logging is enabled, the packets are written to disk in ten-second chunks (wit
 
 Example soft-realtime reader code is available natively for C and Python, which reads packets from the zero-copy shared memory ring buffer. Processing in other languages is possible (at the expense of the zero-copy property) by using a stub reader process (in C or Python) which simply yields the stream of packets via its stdout, suitable for piping into a downstream or parent process implemented in another language.
 
+## Building
+
+Invoke `make` in this repository, with no argument, to compile the code. Optionally, invoke `make install` as root to copy the resulting binary and example `.service` files to `/usr/local/bin/` and `/etc/systemd/system/` respectively.
+
 ## Usage
 
 Invoke with a single argument, specifying the tty to read from:
