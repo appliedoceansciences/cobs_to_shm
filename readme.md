@@ -16,7 +16,7 @@ Example soft-realtime reader code is available natively for C and Python, which 
 
 ## Building
 
-Invoke `make` in this repository, with no argument, to compile the code. Optionally, invoke `make install` as root to copy the resulting binary and example `.service` files to `/usr/local/bin/` and `/etc/systemd/system/` respectively.
+Invoke `make` in this repository, with no argument, to compile the code. Optionally, invoke `make install` as root to copy the resulting binary and example `.service` files to `/usr/local/bin/` and `/etc/systemd/system/` respectively, if applicable.
 
 ## Usage
 
