@@ -29,6 +29,8 @@ Start an additional reader for logging, and pipe the output into logic which wil
 
     ./shm_logger | xargs -I file mv file /final/path/
 
+Example `.service` files are included which invoke the `cobs_to_shm` and `shm_logger` binaries with appropriate arguments. Note that these assume a `daq` user with a sub-1000 uid (so that systemd does not delete the shm segment) whose home directory contains the destination directory for the resulting logged data. Adjust this logic according to your needs, or create a `daq` user with a sub-1000 uid and associated home directory using `useradd -rm daq`.
+
 ## Components
 
 ### Standalone applications
