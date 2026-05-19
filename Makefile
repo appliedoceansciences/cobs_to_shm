@@ -44,6 +44,11 @@ install : cobs_to_shm
 
 uninstall :
 	$(RM) /usr/local/bin/cobs_to_shm
+	$(RM) /usr/local/bin/shm_logger
+	$(RM) /usr/local/bin/shm_logger.sh
+	$(RM) /usr/local/bin/shared_memory_ringbuffer_reader.py
+	$(RM) /etc/systemd/system/cobs_to_shm.service || true
+	$(RM) /etc/systemd/system/shm_logger.service || true
 
 clean :
 	$(RM) -rf *.o *.dSYM ${TARGETS}
