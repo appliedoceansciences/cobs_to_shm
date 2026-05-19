@@ -16,14 +16,14 @@ Example soft-realtime reader code is available natively for C and Python, which 
 
 ## Usage
 
-Invoke with one argument for no logging:
+Invoke with a single argument, specifying the tty to read from:
 
     ./cobs_to_shm /dev/tty.usbmodem1301
     ./packet_health.py shm
 
-Invoke with two arguments for logging, and pipe the output into logic which will move the resulting files to some final path:
+Start an additional reader for logging, and pipe the output into logic which will move the resulting files to some final path:
 
-    ./cobs_to_shm /dev/tty.usbmodem1301 /dev/shm/ | xargs -I file mv file /final/path/
+    ./shm_logger | xargs -I file mv file /final/path/
 
 ## Components
 
