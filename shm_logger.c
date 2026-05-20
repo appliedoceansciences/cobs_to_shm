@@ -35,8 +35,6 @@ int main(int argc, char ** const argv) {
     /* ensure that stdout will not be full-buffered */
     setvbuf(stdout, NULL, _IOLBF, 0);
 
-    fprintf(stderr, "%s: output files will be staged in %s\n", progname, logging_path);
-
     /* install a signal handler so that we can stop cleanly on sigint or sigterm */
     if (-1 == sigaction(SIGINT, &(struct sigaction) { .sa_handler = sigint_handler }, NULL) ||
         -1 == sigaction(SIGTERM, &(struct sigaction) { .sa_handler = sigint_handler }, NULL))
