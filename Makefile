@@ -38,14 +38,12 @@ install : cobs_to_shm
 	install -C cobs_to_shm /usr/local/bin/
 	install -C cobs_to_shm.service /etc/systemd/system/ || true
 	install -C shm_logger /usr/local/bin/
-	install -C shm_logger.sh /usr/local/bin/
 	install -C shm_logger.service /etc/systemd/system/ || true
 	install -C shared_memory_ringbuffer_reader.py /usr/local/bin/
 
 uninstall :
 	$(RM) /usr/local/bin/cobs_to_shm
 	$(RM) /usr/local/bin/shm_logger
-	$(RM) /usr/local/bin/shm_logger.sh
 	$(RM) /usr/local/bin/shared_memory_ringbuffer_reader.py
 	$(RM) /etc/systemd/system/cobs_to_shm.service || true
 	$(RM) /etc/systemd/system/shm_logger.service || true
