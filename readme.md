@@ -71,7 +71,7 @@ Note that since `.wav` files must include the file length in the header, it is n
 
 Assuming apache2 and ffmpeg are installed, the following command (as root) can be used to serve the audio in near real-time (several seconds of latency) in human-listenable form:
 
-    cd /var/www/html/ && shared_memory_ringbuffer_reader.py /cobs_to_shm | parse_acoustic_packets.py | ffmpeg -f s16le -ac 1 -ar 31250 -i - -c:a aac -b:a 128k -listen 1 -f hls -hls_flags delete_segments -hls_time 4 audio.m3u8
+    cd /var/www/html/ && shared_memory_ringbuffer_reader.py /cobs_to_shm | parse_acoustic_packets.py | ffmpeg -f s16le -ac 1 -ar 31250 -i - -af "highpass=f=30,volume=20dB" -c:a aac -b:a 128k -listen 1 -f hls -hls_flags delete_segments audio.m3u8
     
 To listen to this, navigate to http://[ip of board]/audio.m3u8 in a web browser or similar.
 
