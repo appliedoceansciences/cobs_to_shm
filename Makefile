@@ -39,6 +39,7 @@ install : cobs_to_shm
 	install -C cobs_to_shm.service /etc/systemd/system/ || true
 	install -C shm_logger /usr/local/bin/
 	install -C shm_logger.service /etc/systemd/system/ || true
+	install -C audioserver.service /etc/systemd/system/ || true
 	install -C shared_memory_ringbuffer_reader.py /usr/local/bin/
 
 uninstall :
@@ -47,6 +48,7 @@ uninstall :
 	$(RM) /usr/local/bin/shared_memory_ringbuffer_reader.py
 	$(RM) /etc/systemd/system/cobs_to_shm.service || true
 	$(RM) /etc/systemd/system/shm_logger.service || true
+	$(RM) /etc/systemd/system/audioserver.service || true
 
 clean :
 	$(RM) -rf *.o *.dSYM ${TARGETS}

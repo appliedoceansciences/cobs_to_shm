@@ -73,7 +73,7 @@ Assuming apache2 and ffmpeg are installed, the following command (as root) can b
 
     cd /var/www/html/ && shared_memory_ringbuffer_reader.py /cobs_to_shm | parse_acoustic_packets.py | ffmpeg -f s16le -ac 1 -ar 31250 -i - -af "highpass=f=30,volume=20dB" -c:a aac -b:a 128k -listen 1 -f hls -hls_flags delete_segments audio.m3u8
     
-To listen to this, navigate to http://[ip of board]/audio.m3u8 in a web browser or similar.
+To listen to this, navigate to http://[ip of board]/audio.m3u8 in a web browser or similar. An example `.service` file is provided which implements the above pipeline.
 
 ## References
 
