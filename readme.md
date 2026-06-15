@@ -59,8 +59,6 @@ Note that since `.wav` files must include the file length in the header, it is n
 
 - `pcm2packets.py`: Bench testing utility that ingests raw PCM on `stdin`, and constructs a stream of packets on `stdout` in the same logging format emitted by `cobs_to_shm`
 
-- `bin_to_shm`: Bench testing utility that ingests the logging format emitted by `cobs_to_shm` or `pcm2packets.py`, and populates a shared memory ring buffer just as `cobs_to_shm` would do
-
 ### Modules used by the above
 
 - `shared_memory_ringbuffer_reader.py` and `shared_memory_ringbuffer.c`: Python and C modules with functions to read from the shared memory ring buffer and return packets one at a time to calling code. The Python module can also be run as a standalone process, and will yield the stream of packets to `stdout` in the same logging format emitted by `cobs_to_shm`.
