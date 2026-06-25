@@ -10,10 +10,10 @@ from datetime import datetime
 from collections import namedtuple
 import numpy as np
 
-packet_tuple = namedtuple('packet_tuple', ('samples', 'timestamp', 'fs', 'seqnum', 'fullscale', 'timestamp_microseconds'))
+packet_tuple = namedtuple('packet_tuple', ('samples', 'timestamp', 'fs', 'seqnum', 'fullscale', 'timestamp_microseconds', 'logged_timestamp_microseconds'))
 
 # this function can also be imported and used on its own to parse a packet received via udp
-def parse_acoustic_packet(packet_bytes):
+def parse_acoustic_packet(packet_bytes, logged_timestamp_microseconds):
     # if packet size is too small to be an acoustic packet, skip it
     if len(packet_bytes) < 16: return None
 
@@ -44,7 +44,7 @@ def parse_acoustic_packet(packet_bytes):
     # reassemble timestamp in unix seconds
     timestamp_microseconds = ((timestamp_msbs << 16) | timestamp_lsbs) * 16
     timestamp_unix_seconds = timestamp_microseconds / 1e6
-    return packet_tuple(samples=samples, timestamp=timestamp_unix_seconds, fs=sample_rate, seqnum=seqnum, fullscale=fullscale, timestamp_microseconds=timestamp_microseconds)
+    return packet_tuple(samples=samples, timestamp=timestamp_unix_seconds, fs=sample_rate, seqnum=seqnum, fullscale=fullscale, timestamp_microseconds=timestamp_microseconds, logged_timestamp_microseconds=logged_timestamp_microseconds)
 
 # this generator function can be specified as one of the possible upstream sources of
 # blocks of bytes used as input to the below generator, and handles all of the details of
@@ -58,6 +58,8 @@ def yield_packet_bytes_from_log_stream(source):
         # interpret these eight bytes as a 16-bit packet size and 48-bit timestamp
         packet_size, timestamp_lsbs, timestamp_msbs = struct.unpack('<HHI', logging_header_bytes)
 
+        logged_timestamp_microseconds = ((timestamp_msbs << 16) | timestamp_lsbs) * 16
+
         # round packet size up to next eight bytes
         packet_size_with_padding = (packet_size + 7) & ~7
 
@@ -68,7 +70,7 @@ def yield_packet_bytes_from_log_stream(source):
         if packet_size_with_padding != packet_size:
             packet_bytes = packet_bytes[0:packet_size]
 
-        yield packet_bytes
+        yield packet_bytes, logged_timestamp_microseconds
 
 def datestr_from_unix_time(time_in_unix_seconds):
     microseconds = round(time_in_unix_seconds * 1e6)
@@ -84,9 +86,9 @@ def yield_acoustic_packets(yield_packet_bytes_function, source, phonemask):
     samples_yielded = 0
     sample_rate = 0
 
-    for packet_bytes in yield_packet_bytes_function(source):
+    for packet_bytes, logged_timestamp_microseconds in yield_packet_bytes_function(source):
         # attempt to parse the packet bytes as an acoustic packet
-        packet = parse_acoustic_packet(packet_bytes)
+        packet = parse_acoustic_packet(packet_bytes, logged_timestamp_microseconds)
         if not packet: continue
 
         # emit some diagnostic text on the first packet
@@ -107,7 +109,7 @@ def yield_acoustic_packets(yield_packet_bytes_function, source, phonemask):
         samples_yielded += packet.samples.shape[0]
 
         if phonemask is not None:
-            packet = packet_tuple(samples=np.take(packet.samples, phonemask, axis=1), timestamp=packet.timestamp, fs=packet.fs, seqnum=packet.seqnum, fullscale=packet.fullscale, timestamp_microseconds=packet.timestamp_microseconds)
+            packet = packet_tuple(samples=np.take(packet.samples, phonemask, axis=1), timestamp=packet.timestamp, fs=packet.fs, seqnum=packet.seqnum, fullscale=packet.fullscale, timestamp_microseconds=packet.timestamp_microseconds, logged_timestamp_microseconds=packet.logged_timestamp_microseconds)
 
         yield packet
 
