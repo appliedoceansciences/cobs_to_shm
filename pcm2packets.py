@@ -64,6 +64,12 @@ def main():
         if key == 'C': C = int(value)
         if key == 'dtype': input_dtype_string = value
         if key == 't0': t0 = float(value)
+        if key == 'params':
+            import json
+            with open(value) as f: params = json.load(f)
+            if 'positions' in params: C = len(params['positions'])
+            if 'sample_rate' in params: sample_rate = float(params['sample_rate'])
+            if 'dtype' in params: input_dtype_string = params['dtype']
 
     for logging_header_bytes, packet_bytes, padding in pcm2packets(sys.stdin.buffer, input_dtype_string, C, sample_rate, t0):
         sys.stdout.buffer.write(logging_header_bytes + packet_bytes + padding)
