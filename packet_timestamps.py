@@ -10,6 +10,7 @@ yield_packet_bytes_function = yield_packet_bytes_from_log_stream
 
 ipacket = 0
 for packet in yield_acoustic_packets(yield_packet_bytes_function, input_source, None):
-    print('%u, %u.%06u, %u.%06u' % (ipacket, packet.timestamp_microseconds / 1000000, packet.timestamp_microseconds % 1000000,
-                           packet.logged_timestamp_microseconds / 1000000, packet.logged_timestamp_microseconds % 1000000))
+    print('%u, %u.%06u, %u.%06u, %u' % (ipacket, packet.timestamp_microseconds / 1000000, packet.timestamp_microseconds % 1000000,
+                                        packet.logged_timestamp_microseconds / 1000000, packet.logged_timestamp_microseconds % 1000000,
+                                        packet.seqnum))
     ipacket += 1
