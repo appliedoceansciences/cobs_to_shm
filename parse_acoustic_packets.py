@@ -72,8 +72,7 @@ def yield_packet_bytes_from_log_stream(source):
 
         yield packet_bytes, logged_timestamp_microseconds
 
-def datestr_from_unix_time(time_in_unix_seconds):
-    microseconds = round(time_in_unix_seconds * 1e6)
+def datestr_from_unix_microseconds(microseconds):
     integer_portion = microseconds // 1000000
     remainder = microseconds % 1000000
     return '%s.%06uZ' % (datetime.utcfromtimestamp(integer_portion).strftime('%Y%m%dT%H%M%S'), remainder)
@@ -96,16 +95,16 @@ def yield_acoustic_packets(yield_packet_bytes_function, source, phonemask):
             sample_rate = packet.fs
             print('%u channels, %g sps, %u samples per channel per packet' %
                   (packet.samples.shape[1], sample_rate, packet.samples.shape[0]), file=sys.stderr)
-            initial_timestamp = packet.timestamp - packet.samples.shape[0] / sample_rate
+            initial_timestamp = packet.timestamp_microseconds - round(packet.samples.shape[0] * 1e6 / sample_rate)
             print('first packet timestamp %s, implied start time %s ' %
-                (datestr_from_unix_time(packet.timestamp),
-                datestr_from_unix_time(initial_timestamp)), file=sys.stderr)
+                (datestr_from_unix_microseconds(packet.timestamp_microseconds),
+                datestr_from_unix_microseconds(initial_timestamp)), file=sys.stderr)
         else:
             packets_missing = (packet.seqnum - seqnum_prev - 1) % 65536
             if packets_missing != 0:
                 print('warning: expected seqnum %u, got %u, missing %u packets (%g s)' % ((seqnum_prev + 1) % 65536, packet.seqnum, packets_missing, packets_missing * packet.samples.shape[0] / sample_rate), file=sys.stderr)
         seqnum_prev = packet.seqnum
-        timestamp_prev = packet.timestamp
+        timestamp_prev = packet.timestamp_microseconds
         samples_yielded += packet.samples.shape[0]
 
         if phonemask is not None:
@@ -115,9 +114,9 @@ def yield_acoustic_packets(yield_packet_bytes_function, source, phonemask):
 
     print('incoming data has ended', file=sys.stderr)
     if timestamp_prev is not None:
-        print('final packet ends at %s' % (datestr_from_unix_time(timestamp_prev)), file=sys.stderr)
+        print('final packet ends at %s' % (datestr_from_unix_microseconds(timestamp_prev)), file=sys.stderr)
         print('yielded %g seconds according to expected sample rate, %g seconds according to packet timestamps' %
-              ( samples_yielded / sample_rate, timestamp_prev - initial_timestamp), file=sys.stderr)
+              ( samples_yielded / sample_rate, (timestamp_prev - initial_timestamp) / 1e6), file=sys.stderr)
 
 # if running this as a standalone process rather than importing as a module...
 if __name__ == '__main__':
