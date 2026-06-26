@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import numpy as np
+import struct
 
 from shared_memory_ringbuffer_reader import shared_memory_ringbuffer_generator
 
@@ -11,7 +12,10 @@ from parse_acoustic_packets import yield_acoustic_packets, yield_packet_bytes_fr
 # hack to peel off logging headers
 def yield_from_shm_and_strip_logging_header(source):
     for packet_with_logging_header in shared_memory_ringbuffer_generator(source):
-        yield packet_with_logging_header[8:]
+        packet_bytes = packet_with_logging_header[8:]
+        packet_size, timestamp_lsbs, timestamp_msbs = struct.unpack('<HHI', packet_with_logging_header[0:8])
+        logged_timestamp_microseconds = ((timestamp_msbs << 16) | timestamp_lsbs) * 16
+        yield packet_with_logging_header[8:], logged_timestamp_microseconds
 
 def main():
     if len(sys.argv) > 1 or sys.stdin.isatty():
