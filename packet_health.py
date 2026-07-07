@@ -7,7 +7,7 @@ from shared_memory_ringbuffer_reader import shared_memory_ringbuffer_generator
 
 # This provides the generator function which knows how to extract sensor-agnostic frames of
 # acoustic sample data from whatever possibly sensor-specific format they are coming from
-from parse_acoustic_packets import yield_acoustic_packets, yield_packet_bytes_from_log_stream
+from parse_acoustic_packets import yield_acoustic_packets, yield_packet_bytes_from_log_stream, datestr_from_unix_microseconds
 
 # hack to peel off logging headers
 def yield_from_shm_and_strip_logging_header(source):
@@ -32,14 +32,16 @@ def main():
     # do any extra init that requires the first packet to have been received
     C = packet.samples.shape[1]
     fs = packet.fs
-    print('%u channels, sample rate %g sps' % (C, fs), file=sys.stderr)
 
-    while packet:
-        print('          \rmin: %d, max: %d' % (np.min(packet.samples), np.max(packet.samples)),
-              file=sys.stderr, end='')
+    if sys.stdout.isatty():
+        while packet:
+            print('          \rmin: %d, max: %d' % (np.min(packet.samples), np.max(packet.samples)),
+                  file=sys.stderr, end='')
 
-        packet = next(child, None)
+            packet = next(child, None)
 
-    print('', file=sys.stderr)
+        print('', file=sys.stderr)
+    else:
+        print('%u channels, sample rate %.8g sps, time %lu.%06lu (%s)' % (C, fs, packet.timestamp_microseconds / 1000000, packet.timestamp_microseconds % 1000000, datestr_from_unix_microseconds(packet.timestamp_microseconds)))
 
 main()
