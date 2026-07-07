@@ -93,7 +93,7 @@ def yield_acoustic_packets(yield_packet_bytes_function, source, phonemask):
         # emit some diagnostic text on the first packet
         if seqnum_prev is None:
             sample_rate = packet.fs
-            print('%u channels, %g sps, %u samples per channel per packet' %
+            print('%u channels, %.8g sps, %u samples per channel per packet' %
                   (packet.samples.shape[1], sample_rate, packet.samples.shape[0]), file=sys.stderr)
             initial_timestamp = packet.timestamp_microseconds - round(packet.samples.shape[0] * 1e6 / sample_rate)
             print('first packet timestamp %s, implied start time %s ' %
