@@ -42,6 +42,6 @@ def main():
 
         print('', file=sys.stderr)
     else:
-        print('%u channels, sample rate %.8g sps, time %lu.%06lu (%s)' % (C, fs, packet.timestamp_microseconds / 1000000, packet.timestamp_microseconds % 1000000, datestr_from_unix_microseconds(packet.timestamp_microseconds)))
+        print('%u channels, sample rate %.8g sps, time %lu.%06lu (%s)' % (C, fs, packet.timestamp_microseconds // 1000000, packet.timestamp_microseconds % 1000000, datestr_from_unix_microseconds(packet.timestamp_microseconds)))
 
 main()
