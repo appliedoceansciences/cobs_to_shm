@@ -1,0 +1,14 @@
+[Unit]
+Description=audioserver
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=4
+
+WorkingDirectory=/var/www/html/
+
+ExecStart=bash -c "shared_memory_ringbuffer_reader.py /cobs_to_shm | parse_acoustic_packets.py | ffmpeg -loglevel warning -f s16le -ac 1 -ar 31250 -i - -af "highpass=f=40,volume=20dB" -c:a aac -b:a 128k -listen 1 -f hls -hls_flags delete_segments audio.m3u8"
+
+[Install]
+WantedBy=multi-user.target
