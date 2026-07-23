@@ -53,6 +53,8 @@ Note that since `.wav` files must include the file length in the header, it is n
 
 - `shm_logger`: Standalone logger that consumes packets from the ring buffer and writes them to disk using the same logic as `cobs_to_shm` itself, but which can be started and stopped independently of the former. This also serves as an example ring buffer reader application in C.
 
+- `shm_to_pipe`: Minimum viable C standalone process that consumes packets from the ring buffer and writes them to stdout in the logging format emitted to disk by `shm_logger`. Functionally equivalent to `shared_memory_ringbuffer_reader.py` when the latter is invoked as a standalone process, but with less overhead. Typically used as the upstream end of soft-realtime DSP pipelines which consist of multiple processes piped together (possibly with an ssh pipe in between processes).
+
 - `packet_health.py`: Debugging utility, suitable for bench testing or in-water health checks, which reads packets from the shared memory ring buffer and prints some status messages to the console. This also serves as an example ring buffer reader application in Python.
 
 - `shm2udp.py`: Accessory utility which reads packets from the shared memory ring buffer and retransmits each one as a UDP packet to a given address and port
@@ -61,7 +63,7 @@ Note that since `.wav` files must include the file length in the header, it is n
 
 ### Modules used by the above
 
-- `shared_memory_ringbuffer_reader.py` and `shared_memory_ringbuffer.c`: Python and C modules with functions to read from the shared memory ring buffer and return packets one at a time to calling code. The Python module can also be run as a standalone process, and will yield the stream of packets to `stdout` in the same logging format emitted by `cobs_to_shm`.
+- `shared_memory_ringbuffer_reader.py` and `shared_memory_ringbuffer.c`: Python and C modules with functions to read from the shared memory ring buffer and return packets one at a time to calling code. The Python module can also be run as a standalone process, and will yield the stream of packets to `stdout` in the same logging format emitted by `cobs_to_shm`, although see `shm_to_pipe` above for a lower-overhead version of the same functionality.
 
 - `parse_acoustic_packets.py`: Python module which ingests the acoustic packets and yields packets worth of samples at a time to calling code, suitable for developing soft-realtime DSP applications. Can be run as a standalone process, which will ingest the logging format emitted by `cobs_to_shm` and yield raw PCM on `stdout`, suitable for piping into `ffmpeg` or any other software which expects PCM.
 
