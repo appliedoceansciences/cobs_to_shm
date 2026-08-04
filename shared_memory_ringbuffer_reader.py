@@ -74,8 +74,38 @@ def shared_memory_ringbuffer_reader_recv(shm):
 
     return shm.view[payload_offset:(payload_offset + payload_size)]
 
-# end direct port of C API stuff, begin utility generator function that can be used as a
-# python iterator by calling code
+# end direct port of C API stuff, begin convenience functions
+
+def shared_memory_ringbuffer_reader_recv_blocking(shm):
+    if not hasattr(shm, 'seconds_per_packet_num'):
+        shm.seconds_per_packet_num = 0
+        shm.seconds_per_packet_den = 0
+        shm.delay = 0.02
+
+    while True:
+        if not shared_memory_ringbuffer_reader_has_kept_up(shm):
+            raise RuntimeError('reader lapped')
+
+        payload = shared_memory_ringbuffer_reader_recv(shm)
+        if not payload:
+            if shm.seconds_per_packet_num > 0 and not pid_is_still_alive(shm.pid):
+                print('writer has exited', file=sys.stderr)
+                return None
+
+            time.sleep(shm.delay)
+            shm.seconds_per_packet_num += shm.delay
+            continue
+
+        # maintain a rough estimate of the packet rate for optimal delay
+        if shm.seconds_per_packet_num > 0 and shm.seconds_per_packet_den > 0:
+            shm.delay = shm.delay + 0.25 * (shm.seconds_per_packet_num / shm.seconds_per_packet_den - shm.delay)
+            shm.delay = min(max(shm.delay, 0.05), 1.0)
+            shm.seconds_per_packet_den = 0
+
+        shm.seconds_per_packet_num = 0
+        shm.seconds_per_packet_den += 1
+
+        return payload
 
 def shared_memory_ringbuffer_generator(shm_name):
     while True:
@@ -83,37 +113,11 @@ def shared_memory_ringbuffer_generator(shm_name):
         if shm is not None: break
         time.sleep(0.05)
 
-    seconds_per_packet_num = 0
-    seconds_per_packet_den = 0
-    delay = 0.02
-
     while True:
-        payload = shared_memory_ringbuffer_reader_recv(shm)
-        if not payload:
-            if seconds_per_packet_num > 0 and not pid_is_still_alive(shm.pid):
-                print('writer has exited', file=sys.stderr)
-                break
-
-            time.sleep(delay)
-            seconds_per_packet_num += delay
-            continue
-
-        # maintain a rough estimate of the packet rate for optimal delay
-        if seconds_per_packet_num > 0 and seconds_per_packet_den > 0:
-            delay = delay + 0.25 * (seconds_per_packet_num / seconds_per_packet_den - delay)
-            delay = min(max(delay, 0.05), 1.0)
-            seconds_per_packet_den = 0
-
-        seconds_per_packet_num = 0
-        seconds_per_packet_den += 1
+        payload = shared_memory_ringbuffer_reader_recv_blocking(shm)
+        if not payload: break
 
         yield payload
-
-        # we can now detect whether we were lapped while doing something with this slot.
-        # ideally, if we were doing some calculation on the slot contents and then emitting
-        # the result downstream, we'd do this check in between those steps
-        if not shared_memory_ringbuffer_reader_has_kept_up(shm):
-            raise RuntimeError('reader lapped while reading slot')
 
 if __name__ == '__main__':
     def main():
