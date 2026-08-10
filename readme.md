@@ -41,7 +41,7 @@ The acoustic packets consist of a header prepended to a block of samples. The sa
 
 The resulting raw PCM audio can be processed as-is, or a `.wav` header can be prepended to it if necessary:
 
-    ./prepend_wav_header.py combined_raw_pcm_audio.raw > /tmp/combined_audio.wav
+    ./prepend_wav_header.py < combined_raw_pcm_audio.raw > /tmp/combined_audio.wav
 
 Note that since `.wav` files must include the file length in the header, it is not possible to prepend a `.wav` header to a stream of data - a temporary file of not more than 4 gigabytes must first be created. If streaming operation is necessary, omit the `.wav` header and operate on just the raw PCM data.
 
