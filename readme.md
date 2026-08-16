@@ -75,6 +75,10 @@ Assuming apache2 and ffmpeg are installed, the following command (as root) can b
     
 To listen to this, navigate to http://[ip of board]/audio.m3u8 in a web browser or similar. An example `.service` file is provided which implements the above pipeline.
 
+## Future directions
+
+An ongoing effort to replace this COBS-over-USB-CDC-serial with UDP-over-USB-CDC-Ethernet is well underway. This will move more of the framing logic from userspace into Linux kernel space on the receiving end, allowing the receiving SBC to use less power. Downstream, the result will be that this repository is subsumed by a `udp_to_shm` which is functionally identical as far as all downstream code is concerned (and which has the further advantage of being useable as-is when the transport layer is physical Ethernet rather than USB). Any code which assumes the format of the shared memory ring buffer and `.bin` files, but does not hard code the name of the shared memory segment containing the ring buffer, will be forward-compatible across this change.
+
 ## References
 
 - S. Cheshire and M. Baker, "Consistent overhead byte stuffing," in IEEE/ACM Transactions on Networking, vol. 7, no. 2, pp. 159-172, April 1999, doi: 10.1109/90.769765.
