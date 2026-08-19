@@ -33,10 +33,23 @@ def main():
     C = packet.samples.shape[1]
     fs = packet.fs
 
+    # throttle prints to every quarter second
+    packets_per_print = max(1, int(0.25 * fs / packet.samples.shape[0]))
+    ipacket = 0
+    min_seen = 32767
+    max_seen = -32768
+
     if sys.stdout.isatty():
         while packet:
-            print('          \rmin: %d, max: %d' % (np.min(packet.samples), np.max(packet.samples)),
-                  file=sys.stderr, end='')
+            min_seen = min(min_seen, np.min(packet.samples))
+            max_seen = max(max_seen, np.max(packet.samples))
+
+            ipacket += 1
+            if packets_per_print == ipacket:
+                print('          \rmin: %d, max: %d' % (min_seen, max_seen), file=sys.stderr, end='')
+                ipacket = 0
+                min_seen = 32767
+                max_seen = -32768
 
             packet = next(child, None)
 
