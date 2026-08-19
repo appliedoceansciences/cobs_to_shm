@@ -46,7 +46,11 @@ def main():
 
             ipacket += 1
             if packets_per_print == ipacket:
-                print('          \rmin: %d, max: %d' % (min_seen, max_seen), file=sys.stderr, end='')
+                print('          \rdata time: %s, logged time: %s: min: %d, max: %d' % (
+                    datestr_from_unix_microseconds(packet.timestamp_microseconds),
+                    datestr_from_unix_microseconds(packet.logged_timestamp_microseconds),
+                    min_seen, max_seen
+                ), file=sys.stderr, end='')
                 ipacket = 0
                 min_seen = 32767
                 max_seen = -32768
